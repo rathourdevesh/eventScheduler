@@ -1,5 +1,8 @@
 import os
 
-BOOTSTRAP_SERVER = "localhost:9092"
-COMSUMER_TOPIC = ["mytopic1"]
-CONSUMER_GROUP_ID = "temp-test-group-1"
+BOOTSTRAP_SERVER = os.getenv("BOOTSTRAP_SERVER")
+COMSUMER_TOPIC = [os.getenv("COMSUMER_TOPIC")]
+CONSUMER_GROUP_ID = os.getenv("CONSUMER_GROUP_ID")
+MONGO_HOST = os.getenv("MONGO_HOST")
+DB_NAME = os.getenv("DB_NAME")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
