@@ -68,7 +68,7 @@ KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES = {
 
 
 ASYNC_PRODUCER_CONFIG = {
-    'service_name': 'chronos',
+    'service_name': 'producer_service',
     'producer_config': {
         'bootstrap.servers': os.environ.get(
             'KAFKA_BROKER_LIST', 'localhost:9092'),

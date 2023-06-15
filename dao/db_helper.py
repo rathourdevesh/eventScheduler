@@ -5,6 +5,7 @@ import pymongo
 import time
 
 import env
+from kafkaProducer.confluent_producer import KafkaProducer
 
 class Scheduler:
     def __init__(self, uri=f"mongodb://{env.MONGO_HOST}/", db_name=env.DB_NAME, collection_name=env.COLLECTION_NAME):
@@ -27,6 +28,7 @@ class Scheduler:
             for task in tasks:
                 if time.time() > task["last_run"] + task["interval"] and task["retry"] > 0:
                     print(f"running task {task}")
+                    KafkaProducer().produce_event(task.get("topic"), task.get("payload"))
                     self.collection.update_one(
                         {"_id": task["_id"]},
                         {"$set": {
