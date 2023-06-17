@@ -14,7 +14,7 @@ class KafkaProducer(object):
         self.producer_config =  env.KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES
         self.producer = Producer(**self.producer_config)
 
-    def delivery_report(err, msg):
+    def delivery_report(self, err, msg):
         """Delivery Report For The Producer.
 
         Called once for each message produced to indicate delivery
