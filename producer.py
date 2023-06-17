@@ -53,7 +53,7 @@ def delivery_report(err, msg):
 
 from confluent_kafka import Producer
 import socket
-import os
+import os, json
 
 KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES = {
     'default.topic.config': {'acks': 'all'},
@@ -68,7 +68,7 @@ KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES = {
 
 
 ASYNC_PRODUCER_CONFIG = {
-    'service_name': 'chronos',
+    'service_name': 'producer_service',
     'producer_config': {
         'bootstrap.servers': os.environ.get(
             'KAFKA_BROKER_LIST', 'localhost:9092'),
@@ -79,7 +79,14 @@ producer_config =  KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES
 
 producer = Producer(**producer_config)
 
-producer.produce("mytopic1", "test msg1".encode("utf-8"),
+payload = {
+    "payload": {"another task": 1},
+    "interval": 120, # event will be emitted after x mins.
+    "retry": 3, # retryCount how many times to retry.
+    "topic": "mytopic2", #topic to which payload to emitted.
+    "seriliazationFormat": "json" #json/xml default received format.
+}
+producer.produce("mytopic1", json.dumps(payload).encode("utf-8"),
     callback=delivery_report)
 
 producer.flush(10)
