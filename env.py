@@ -7,6 +7,7 @@ CONSUMER_GROUP_ID = os.getenv("CONSUMER_GROUP_ID")
 MONGO_HOST = os.getenv("MONGO_HOST")
 DB_NAME = os.getenv("DB_NAME")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME")
+MODE = os.getenv("MODE")
 
 KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES = {
     'default.topic.config': {'acks': 'all'},
@@ -22,7 +23,6 @@ KAFKA_PRODUCER_CONFIG_DEFAULT_VALUES = {
 ASYNC_PRODUCER_CONFIG = {
     'service_name': 'producer_service',
     'producer_config': {
-        'bootstrap.servers': os.environ.get(
-            'KAFKA_BROKER_LIST', 'localhost:9092'),
+        'bootstrap.servers':  BOOTSTRAP_SERVER,
     }
 }

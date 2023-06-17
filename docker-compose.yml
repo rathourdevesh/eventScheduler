@@ -1,69 +1,86 @@
 version: '3'
 services:
-  # zookeeper:
-  #   image: zookeeper
-  #   container_name: zookeeper
-  #   ports:
-  #     - "2181:2181"
+  event_scheduler_consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: event_scheduler_consumer
+    container_name: event_scheduler_consumer
+    platform: linux/amd64
+    volumes:
+      - .:/srv/eventScheduler
+    environment:
+      - MODE=consumer
+      - BOOTSTRAP_SERVER=kafka:29092
+      - COMSUMER_TOPIC=mytopic1
+      - CONSUMER_GROUP_ID=temp-test-group-1
+      - MONGO_HOST=mongo:27017
+      - DB_NAME=mytasks
+      - COLLECTION_NAME=tasks
+    depends_on:
+      - kafka
 
+  event_scheduler_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: event_scheduler_worker
+    container_name: event_scheduler_worker
+    platform: linux/amd64
+    volumes:
+      - .:/srv/eventScheduler
+    environment:
+      - MODE=worker
+      - BOOTSTRAP_SERVER=kafka:29092
+      - COMSUMER_TOPIC=mytopic1
+      - CONSUMER_GROUP_ID=temp-test-group-1
+      - MONGO_HOST=mongo:27017
+      - DB_NAME=mytasks
+      - COLLECTION_NAME=tasks
+    depends_on:
+      - mongo
 
-  # kafka:
-  #   image: wurstmeister/kafka
-  #   container_name: kafka
-  #   ports:
-  #     - "9092:9092"
-  #   environment:
-  #     - KAFKA_LISTENERS=PLAINTEXT://localhost:9092
-  #     - KAFKA_ADVERTISED_HOST_NAME=kafka
-  #     - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-  #     - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-  #     - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-  #     - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-  #     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
-  #   depends_on:
-  #     - zookeeper
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
+  mongo:
+    image: mongo:latest
+    ports:
+      - 27018:27017
+    hostname: mongo
+    container_name: mongo
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    platform: linux/amd64
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    platform: linux/amd64
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=172.17.0.1:9092
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=172.17.0.1:2181
+    image: provectuslabs/kafka-ui:latest
     ports:
-      - "9000:8080"
-    # extra_hosts:
-      # - "host.docker.internal:172.17.0.1"
-  #   depends_on:
-  #     - kafka
-
-
-
-  # zookeeper:
-  #   image: confluentinc/cp-zookeeper:latest
-  #   container_name: zookeeper
-  #   hostname: zookeeper
-  #   environment:
-  #     - ZOOKEEPER_CLIENT_PORT=2181
-  #   ports:
-  #     - 2181:2181
-
-  # kafka:
-  #   image: confluentinc/cp-kafka:latest
-  #   container_name: kafka
-  #   hostname: kafka
-  #   environment:
-  #     - KAFKA_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-  #     - KAFKA_ADVERTISED_HOST_NAME=kafka
-  #     - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-  #     - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-  #     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-  #     - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-  #     - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-  #   depends_on:
-  #     - zookeeper
-  #   ports:
-  #     - 9092:9092
+      - 9000:8080
+    depends_on:
+      - kafka
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092

@@ -16,24 +16,30 @@ class Scheduler:
     
     def add_task(self, payload):
         """Insert task into mongo db."""
-        task = {
-            "last_run": time.time()
-        }
-        task.update(payload)
-        self.collection.insert_one(task)
+        try:
+            task = {
+                "last_run": time.time()
+            }
+            task.update(payload)
+            self.collection.insert_one(task)
+        except Exception as e:
+            print(e)
     
     async def run(self):
         while True:
-            tasks = self.collection.find()
-            for task in tasks:
-                if time.time() > task["last_run"] + task["interval"] and task["retry"] > 0:
-                    print(f"running task {task}")
-                    KafkaProducer().produce_event(task.get("topic"), task.get("payload"))
-                    self.collection.update_one(
-                        {"_id": task["_id"]},
-                        {"$set": {
-                            "last_run": time.time(),
-                            "retry": task["retry"] - 1}
-                        },
-                    )
+            try:
+                tasks = self.collection.find()
+                for task in tasks:
+                    if time.time() > task["last_run"] + task["interval"] and task["retry"] > 0:
+                        print(f"running task {task}")
+                        KafkaProducer().produce_event(task.get("topic"), task.get("payload"))
+                        self.collection.update_one(
+                            {"_id": task["_id"]},
+                            {"$set": {
+                                "last_run": time.time(),
+                                "retry": task["retry"] - 1}
+                            },
+                        )
+            except Exception as e:
+                print(e)
             await asyncio.sleep(0.9)
